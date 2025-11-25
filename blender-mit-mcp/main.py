@@ -7,9 +7,6 @@ import os
 # Create MCP server
 mcp: FastMCP[Any] = FastMCP("blender-mit-mcp", port=8000)
 
-
-
-
 @mcp.tool()
 def load_file(filepath: str) -> str:
     print(f"[DEBUG] load_file called with: {filepath}")
@@ -78,7 +75,7 @@ def distance_between(obj1_id: str, obj2_id: str) -> float:
 
 
 @mcp.tool()
-def list_objects() -> list[dict]:
+def list_objects() -> list[dict[Any, Any]]:
     """
     List all objects in the current Blender scene with name, type, and location.
     """

@@ -59,6 +59,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "anthropic" },
+    { name = "blender-stubs" },
     { name = "bpy" },
     { name = "mathutils" },
     { name = "mcp" },
@@ -68,11 +69,18 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "anthropic", specifier = ">=0.75.0" },
+    { name = "blender-stubs", specifier = ">=3.12.27" },
     { name = "bpy", specifier = ">=5.0.0" },
     { name = "mathutils", specifier = ">=3.3.0" },
     { name = "mcp", specifier = ">=1.22.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
 ]
+
+[[package]]
+name = "blender-stubs"
+version = "3.12.27"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/04/8cbba674b1abfb6d3f3bd05faeb59e02f305c13af0fdc853702455978835/blender-stubs-3.12.27.tar.gz", hash = "sha256:fecb3fc005d0171b051b1cd44427e4c47cc8d87dc48a3566f119f26c37478759", size = 461591, upload-time = "2022-04-11T11:07:09.443Z" }
 
 [[package]]
 name = "bpy"
