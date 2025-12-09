@@ -75,6 +75,118 @@ def gltf_to_pointcloud(gltf_path: str, ply_path: str, num_points: int = 10000) -
         logger.error(f"Failed to convert GLTF to point cloud: {e}")
         return f"Failed to convert GLTF to point cloud: {e}"
 
+
+@mcp.tool()
+def add_node_to_object(obj_name: str, material_name: str):
+    """
+    Add a material to an object by name.
+    """
+    # Get the object
+    obj = bpy.data.objects.get(obj_name)
+    if obj is None:
+        raise ValueError(f"Object '{obj_name}' not found")
+    
+    # Get or create the material
+    mat = bpy.data.materials.get(material_name)
+    if mat is None:
+        raise ValueError(f"Material '{material_name}' not found")
+    
+    # Add material to object
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
+    
+    return f"Material '{material_name}' added to object '{obj_name}'"
+
+@mcp.tool()
+def list_materials():
+    """
+    List all materials in the current Blender scene.
+    """
+    materials = []
+    for mat in bpy.data.materials:
+        materials.append({
+            "name": mat.name,
+            "use_nodes": mat.use_nodes,
+            "users": mat.users
+        })
+    return materials
+
+@mcp.tool()
+def get_bsdf_node_and_add(
+    material_name: str,
+    base_color: tuple[float, float, float] | None = (1.0, 1.0, 1.0),
+    image_path: str | None = None,
+    brightness: float = 1.0,
+    contrast: float = 1.0,
+    emission: float = 0.0
+):
+    """
+    Create a material with a Principled BSDF.
+    Can use a solid color or an image texture.
+    Applies brightness, contrast, and emission.
+    Returns the BSDF node.
+    """
+    # --- Create material ---
+    if material_name in bpy.data.materials:
+        mat = bpy.data.materials[material_name]
+    else:
+        mat = bpy.data.materials.new(material_name)
+        mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+    
+    # --- Output node ---
+    output = nodes.new("ShaderNodeOutputMaterial")
+    output.location = (400, 0)
+    
+    # --- Principled BSDF ---
+    bsdf = nodes.new("ShaderNodeBsdfPrincipled")
+    bsdf.location = (0, 0)
+    links.new(bsdf.outputs["BSDF"], output.inputs["Surface"])
+    
+    # --- Base color source ---
+    color_source = None
+    if image_path:
+        tex = nodes.new("ShaderNodeTexImage")
+        tex.image = bpy.data.images.load(image_path)
+        tex.location = (-400, 0)
+        color_source = tex
+    else:
+        rgb = nodes.new("ShaderNodeRGB")
+        rgb.outputs[0].default_value = (*base_color, 1.0)
+        rgb.location = (-400, 0)
+        color_source = rgb
+    
+    # --- Brightness / Contrast node ---
+    if brightness != 1.0 or contrast != 1.0:
+        bc = nodes.new("ShaderNodeBrightContrast")
+        bc.location = (-200, 0)
+        bc.inputs["Bright"].default_value = brightness - 1.0
+        bc.inputs["Contrast"].default_value = contrast - 1.0
+        links.new(color_source.outputs[0], bc.inputs["Color"])
+        links.new(bc.outputs["Color"], bsdf.inputs["Base Color"])
+    else:
+        links.new(color_source.outputs[0], bsdf.inputs["Base Color"])
+    
+    # --- Emission ---
+    if emission > 0.0:
+        emission_color = base_color if base_color else (1.0, 1.0, 1.0)
+        emission_rgb = nodes.new("ShaderNodeRGB")
+        emission_rgb.outputs[0].default_value = (*emission_color, 1.0)
+        emission_rgb.location = (-200, -200)
+        
+        emission_value = nodes.new("ShaderNodeValue")
+        emission_value.outputs[0].default_value = emission
+        emission_value.location = (-200, -300)
+        
+        links.new(emission_rgb.outputs[0], bsdf.inputs["Emission Color"])
+        links.new(emission_value.outputs[0], bsdf.inputs["Emission Strength"])
+    
+    return bsdf
+
 @mcp.tool()
 def export_gltf(filepath: str, objects: list[str] | None = None) -> str:
     """

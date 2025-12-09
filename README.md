@@ -16,7 +16,7 @@ Save the current scene to a specified path.
 
 
 	Create a sphere
-create_sphere(name: str) -> str
+`create_sphere(name: str) -> str`
 
 
 	List all objects
@@ -50,3 +50,9 @@ Converts a GLTF/GLB mesh to a PLY point cloud.
 	include_interior=True samples points inside the mesh volume.
 	num_points controls the number of points sampled.
 
+
+	Set camera focal length. Tweaks focal length of a camera
+`set_camera_focal_length(focal_length_mm: float):`
+
+	Renders the image to png
+`def render_image(output_path: str):`
