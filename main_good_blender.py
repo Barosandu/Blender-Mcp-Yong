@@ -179,8 +179,8 @@ def optimize_camera_pose_mm(IDP, real_w, real_h, img_w, img_h, sensor_width_mm=3
     ], dtype=torch.float32)
 
     # 1. Inițializăm parametrii
-    cam_pos = nn.Parameter(torch.tensor([0.0, 0.0, -20.0]))
-    cam_rot = nn.Parameter(torch.tensor([0.1, 0.1, 0.1]))
+    cam_pos = nn.Parameter(torch.tensor([0.0, 0.0, 20.0]))
+    cam_rot = nn.Parameter(torch.tensor([math.pi, 0., 0.]))
     
     focal_mm_param = nn.Parameter(torch.tensor(32.0))
     
@@ -189,7 +189,7 @@ def optimize_camera_pose_mm(IDP, real_w, real_h, img_w, img_h, sensor_width_mm=3
         {'params': [focal_mm_param], 'lr': 0.01} 
     ])
 
-    for i in range(6000):
+    for i in range(12000):
         optimizer.zero_grad()
         
         f_mm = torch.abs(focal_mm_param)
