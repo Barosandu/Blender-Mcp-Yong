@@ -215,7 +215,7 @@ def optimize_camera_pose_mm(IDP, real_w, real_h, img_w, img_h, sensor_width_mm=3
             all_rot_losses.append(torch.sum(torch.norm(shifted - IDP, dim=1)))
         
         loss = torch.min(torch.stack(all_rot_losses))
-        penalty = torch.sum(torch.relu(0.5 - z_coords)) * 100
+        penalty = 0#torch.sum(torch.relu(0.5 - z_coords)) * 100
         
         total_loss = loss + penalty
         total_loss.backward()
@@ -230,7 +230,7 @@ def optimize_camera_pose_mm(IDP, real_w, real_h, img_w, img_h, sensor_width_mm=3
         world_matrix = torch.eye(4)
         world_matrix[:3, :3] = R
         world_matrix[:3, 3] = cam_pos
-    return cam_pos.detach(), cam_rot.detach(), focal_mm_param.detach(), world_matrix.detach()
+    return cam_pos.detach(), cam_rot.detach(), focal_mm_param.detach(), world_matrix.detach(), total_loss.detach()
 
 def get_wh(image_path: str):
     img = cv2.imread(image_path)
@@ -475,8 +475,21 @@ def convert_to_blender_matrix3(cam_pos, cam_rot):
 def make_poses(name: str):
     idp = get_indexed_dots(name)
     w, h = get_wh(name)
-    real_w, real_h = (2 * 6.3, 2 * 4.29)
-    pos, rot, focus, world = optimize_camera_pose_mm(idp, real_w, real_h, w, h)
+
+
+    real_w1, real_h1 = (2 * 6.3, 2 * 4.29)
+    pos1, rot1, focus1, world1, total_loss1 = optimize_camera_pose_mm(idp, real_w1, real_h1, w, h)
+
+    real_h2, real_w2 = (2 * 6.3, 2 * 4.29)
+    pos2, rot2, focus2, world2, total_loss2 = optimize_camera_pose_mm(idp, real_w2, real_h2, w, h)
+
+
+    if (total_loss1 < total_loss2):
+        pos, rot, focus, world, total_loss = pos1, rot1, focus1, world1, total_loss1 
+        real_w, real_h = real_w1, real_h1
+    else:
+        pos, rot, focus, world, total_loss =  pos2, rot2, focus2, world2, total_loss2  
+        real_w, real_h = real_w2, real_h2
     print(f"Optimizare finală:")
     print(f"Position: {pos}")
     print(f"Rotation (radians): {rot}")
