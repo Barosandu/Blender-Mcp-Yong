@@ -1,0 +1,13 @@
+[project]
+name = "mit-yong-facut-de-noi"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "bpy>=4.4.0",
+    "mathutils>=3.3.0",
+    "matplotlib>=3.10.8",
+    "opencv-python>=4.13.0.92",
+    "torch>=2.10.0",
+]

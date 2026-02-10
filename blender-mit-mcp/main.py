@@ -313,6 +313,55 @@ def list_objects() -> list[dict[Any, Any]]:
 
 
 @mcp.tool()
+def chamfer_distance(pcd1_path: str, pcd2_path: str, num_samples: int = 10000) -> float:
+    """
+    Compute Chamfer distance between two point clouds.
+
+    :param pcd1_path: path to first PLY/point cloud
+    :param pcd2_path: path to second PLY/point cloud
+    :param num_samples: if the clouds are too big, sample this many points
+    :return: Chamfer distance (float)
+    """
+    logger.debug(f"chamfer_distance called: {pcd1_path} vs {pcd2_path}, num_samples={num_samples}")
+
+    # Load point clouds
+    pcd1 = o3d.io.read_point_cloud(pcd1_path)
+    pcd2 = o3d.io.read_point_cloud(pcd2_path)
+
+    if pcd1.is_empty() or pcd2.is_empty():
+        logger.error("One or both point clouds are empty")
+        return float('inf')
+
+    # Sample points uniformly if needed
+    if len(pcd1.points) > num_samples:
+        pcd1 = pcd1.random_down_sample(num_samples / len(pcd1.points))
+    if len(pcd2.points) > num_samples:
+        pcd2 = pcd2.random_down_sample(num_samples / len(pcd2.points))
+
+    # Convert to numpy arrays
+    pts1 = np.asarray(pcd1.points)
+    pts2 = np.asarray(pcd2.points)
+
+    # Build KD-trees for nearest neighbor search
+    tree1 = o3d.geometry.KDTreeFlann(pcd1)
+    tree2 = o3d.geometry.KDTreeFlann(pcd2)
+
+    # --- Chamfer distance formula ---
+    def nearest_distance(src_pts, target_tree):
+        distances = []
+        for p in src_pts:
+            [_, idx, dists] = target_tree.search_knn_vector_3d(p, 1)
+            distances.append(dists[0])  # squared distance
+        return np.mean(distances)
+
+    dist1 = nearest_distance(pts1, tree2)
+    dist2 = nearest_distance(pts2, tree1)
+
+    chamfer = dist1 + dist2
+    logger.debug(f"Chamfer distance: {chamfer}")
+    return chamfer
+
+@mcp.tool()
 def set_camera_focal_length(focal_length_mm: float):
     """
     Set camera focal length in millimeters.
@@ -530,3 +579,11 @@ def rotate_object(object_id: str, rot_x: float, rot_y: float, rot_z: float) -> s
 if __name__ == "__main__":
     mcp.run(transport='stdio')
 
+# function to allig camera function with image
+# call mcp - exort image from camera (fix camera fov and angle)
+# ^ only once.
+# Move 3d objects 
+# Function to allign to markes
+# Fix th angle of the camera && camera settings
+# take pics, 
+# now change 3d obj pos
